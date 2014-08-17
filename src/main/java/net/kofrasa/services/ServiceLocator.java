@@ -4,13 +4,15 @@ import java.util.*;
 
 /**
  * ServiceLocator class is small registry implementation responsible for the initializing, and managing
- * externally developed application dependencies from a configuration. It can also be used to load DI
- * enabled objects by registering extra initializers for interface types
+ * externally developed application dependencies from a configuration.
  *
  * @author: francis
  */
 public enum ServiceLocator {
 
+    /**
+     * The singleton instance of the ServiceLocator class
+     */
     instance;
 
     private final Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
@@ -23,14 +25,17 @@ public enum ServiceLocator {
     }
 
     /**
-     * Load and configure all third-party from the configuration
+     * Initialize the service locator
+     * @param configuration the properties configuration for the services
      */
     synchronized public void init(final Properties configuration) {
         init(configuration, "");
     }
 
     /**
-     * Load and configure all third-party com.rancard.services from the configuration
+     * Initialize the service locator
+     * @param configuration the properties configuration for the services
+     * @param prefix a prefix string of properties to load
      */
     synchronized public void init(final Properties configuration, String prefix) {
         if (initialized) return;
