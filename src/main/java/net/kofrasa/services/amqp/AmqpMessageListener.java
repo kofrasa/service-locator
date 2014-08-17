@@ -5,7 +5,6 @@ import java.io.Serializable;
 /**
  * @author: francis
  */
-@FunctionalInterface
 public interface AmqpMessageListener extends Serializable {
 
     /**

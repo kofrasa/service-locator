@@ -1,6 +1,6 @@
 package net.kofrasa.services.amqp;
 
-import com.rancard.ext.configuration.Service;
+import net.kofrasa.services.Service;
 
 /**
  * @author: francis
@@ -12,13 +12,4 @@ public interface AmqpService extends Service {
      * @return
      */
     AmqpChannel createChannel();
-
-    /**
-     *
-     * @param queue
-     * @param message
-     */
-//    default void send(String queue, AmqpMessage message) {
-//        createChannel().send(queue, message);
-//    }
 }
