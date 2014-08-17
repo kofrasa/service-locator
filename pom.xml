@@ -10,7 +10,7 @@
   <packaging>jar</packaging>
 
   <name>A ServiceLocator implementation</name>
-  <description>A simple service locator implementation for explicit loading of application services</description>
+  <description>A simple lightweight service locator for managing application services </description>
   <url>http://github.com/kofrasa/service-locator</url>
 
   <licenses>
