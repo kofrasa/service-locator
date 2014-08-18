@@ -11,5 +11,5 @@ public interface AmqpMessageListener extends Serializable {
      * Receives a message from the associated queue
      * @param message
      */
-    void onMessage(AmqpMessage message);
+    void onMessage(Serializable message);
 }
