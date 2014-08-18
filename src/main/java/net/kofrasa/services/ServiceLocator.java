@@ -1,5 +1,6 @@
 package net.kofrasa.services;
 
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 /**
@@ -54,7 +55,18 @@ public enum ServiceLocator {
                 try {
                     // eagerly ensure that all provided classes can be loaded
                     Class<?> clazz = Class.forName(className);
-                    classMap.put(name, clazz);
+                    // ensure class has a default constructor
+                    boolean loaded = false;
+                    for (Constructor<?> c : clazz.getConstructors()) {
+                        if (c.isAccessible() && c.getParameterCount() == 0) {
+                            classMap.put(name, clazz);
+                            loaded = true;
+                            break;
+                        }
+                    }
+                    if (!loaded)
+                        throw new NoSuchMethodException(
+                                "No default constructor for class " + clazz.getCanonicalName() + " found");
                 } catch (Exception ex) {
                     System.out.printf("[%s] Could not load class %s", ServiceLocator.class.getName(), className);
                     ex.printStackTrace();
@@ -85,24 +97,27 @@ public enum ServiceLocator {
      * @param <T>
      * @return
      */
-    public <T extends Service> T load(String name) {
+    public <T> T load(String name) {
         synchronized (Locks.INSTANCE) {
             if (!services.containsKey(name) && classMap.containsKey(name)) {
                 Class clazz = classMap.get(name);
                 List<Class<?>> interfaces = getAllInterfaces(clazz);
                 T service = null;
                 try {
-                    if (interfaces.contains(Service.class)) {
-                        System.out.println("Initializing " + clazz.getCanonicalName());
-                        service = (T) clazz.newInstance();
-                        services.put(name, service);
-                    } else {
+                    boolean loaded = false;
+                    if (!factoryMap.isEmpty()) {
                         for (Class<?> cls : factoryMap.keySet()) {
                             if (interfaces.contains(cls)) {
                                 ServiceFactory<T> factory = factoryMap.get(cls);
+                                System.out.println("Initializing " + clazz.getCanonicalName());
                                 service = factory.getInstance(cls);
                             }
                         }
+                    }
+                    // now attempt with default constructor
+                    if (!loaded) {
+                        service = (T) clazz.newInstance();
+                        services.put(name, service);
                     }
                     services.put(name, Objects.requireNonNull(service, "Could not load service " + name));
                 } catch (Exception e) {

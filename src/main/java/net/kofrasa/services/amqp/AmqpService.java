@@ -1,12 +1,10 @@
 package net.kofrasa.services.amqp;
 
-import net.kofrasa.services.Service;
-
 /**
  * This {@code AmqpService} class represent an AMQP service used for providing queueing facilities
  * @author: francis
  */
-public interface AmqpService extends Service {
+public interface AmqpService {
 
     /**
      * Gets a new channel to send a message
