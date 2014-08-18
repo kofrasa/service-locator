@@ -18,6 +18,7 @@ public enum ServiceLocator {
     private final Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
     private final Map<String, Object> values = new HashMap<String, Object>();
     private final Map<String, Object> services = new HashMap<String, Object>();
+    private final Map<Class<?>, ServiceFactory> factoryMap = new HashMap<Class<?>, ServiceFactory>();
     private boolean initialized = false;
 
     enum Locks {
@@ -26,6 +27,7 @@ public enum ServiceLocator {
 
     /**
      * Initialize the service locator
+     *
      * @param configuration the properties configuration for the services
      */
     synchronized public void init(final Properties configuration) {
@@ -34,19 +36,29 @@ public enum ServiceLocator {
 
     /**
      * Initialize the service locator
+     *
      * @param configuration the properties configuration for the services
-     * @param prefix a prefix string of properties to load
+     * @param prefix        a prefix string of properties to load
      */
     synchronized public void init(final Properties configuration, String prefix) {
         if (initialized) return;
 
-        prefix = (prefix == null) ? "" : prefix.trim() + ".";
+        prefix = (prefix == null || "".equals(prefix.trim())) ? "" : prefix.trim() + ".";
         // load all configuration strings beginning with service.<name>.<class>=<module>
         // use <name> as the key and initiate the module class
         for (Map.Entry e : configuration.entrySet()) {
-            String key = e.getKey().toString();
-            if (key.startsWith(prefix)) {
-                configure(key.substring(prefix.length()), e.getValue().toString());
+            String name = e.getKey().toString();
+            if (prefix.equals("") || name.startsWith(prefix)) {
+                name = name.substring(prefix.length());
+                final String className = e.getValue().toString();
+                try {
+                    // eagerly ensure that all provided classes can be loaded
+                    Class<?> clazz = Class.forName(className);
+                    classMap.put(name, clazz);
+                } catch (Exception ex) {
+                    System.out.printf("[%s] Could not load class %s", ServiceLocator.class.getName(), className);
+                    ex.printStackTrace();
+                }
             }
         }
         initialized = true;
@@ -54,11 +66,16 @@ public enum ServiceLocator {
 
     /**
      * Register global values
-     * @param name identifier of the variable
+     *
+     * @param name  identifier of the variable
      * @param value the value
      */
     synchronized public void register(String name, final Object value) {
         values.put(name, value);
+    }
+
+    public <T> void addFactory(Class<?> clsInterface, ServiceFactory<T> factory) {
+        factoryMap.put(clsInterface, Objects.requireNonNull(factory));
     }
 
     /**
@@ -72,10 +89,22 @@ public enum ServiceLocator {
         synchronized (Locks.INSTANCE) {
             if (!services.containsKey(name) && classMap.containsKey(name)) {
                 Class clazz = classMap.get(name);
+                List<Class<?>> interfaces = getAllInterfaces(clazz);
+                T service = null;
                 try {
-                    System.out.println("Initializing " + clazz.getCanonicalName());
-                    T service = (T) clazz.newInstance();
-                    services.put(name, service);
+                    if (interfaces.contains(Service.class)) {
+                        System.out.println("Initializing " + clazz.getCanonicalName());
+                        service = (T) clazz.newInstance();
+                        services.put(name, service);
+                    } else {
+                        for (Class<?> cls : factoryMap.keySet()) {
+                            if (interfaces.contains(cls)) {
+                                ServiceFactory<T> factory = factoryMap.get(cls);
+                                service = factory.getInstance(cls);
+                            }
+                        }
+                    }
+                    services.put(name, Objects.requireNonNull(service, "Could not load service " + name));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -95,29 +124,9 @@ public enum ServiceLocator {
         return (T) values.get(name);
     }
 
-
-    /**
-     * Configure the dependency
-     *
-     * @param className
-     */
-    private void configure(String name, String className) {
-        try {
-            Class<?> clazz = Class.forName(className);
-            List<Class<?>> interfaces = getAllInterfaces(clazz);
-            if (interfaces.contains(Service.class)) {
-                // lazy initialize them first demand
-                classMap.put(name, clazz);
-            } else {
-                throw new Exception("Class " + className + " does not implement Service");
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
     /**
      * Get all the interfaces implement by the given class
+     *
      * @param clazz
      * @return
      */
@@ -130,7 +139,7 @@ public enum ServiceLocator {
         interfaces.addAll(Arrays.asList(clazz.getInterfaces()));
         parents.add(clazz.getSuperclass());
 
-        while(!parents.isEmpty()) {
+        while (!parents.isEmpty()) {
             Class<?> cls = parents.poll();
             interfaces.addAll(Arrays.asList(cls.getInterfaces()));
             cls = cls.getSuperclass();
