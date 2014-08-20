@@ -1,7 +1,11 @@
 package net.kofrasa.services;
 
+import com.google.inject.Guice;
+import net.kofrasa.services.amqp.AmqpChannel;
+
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ServiceLocator class is small registry implementation responsible for the initializing, and managing
@@ -17,9 +21,9 @@ public enum ServiceLocator {
     instance;
 
     private final Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
-    private volatile Map<String, Object> values = new HashMap<String, Object>();
-    private volatile Map<String, Object> services = new HashMap<String, Object>();
-    private volatile Map<Class<?>, ServiceFactory> factoryMap = new HashMap<Class<?>, ServiceFactory>();
+    private volatile Map<String, Object> values = new ConcurrentHashMap<String, Object>();
+    private volatile Map<String, Object> services = new ConcurrentHashMap<String, Object>();
+    private volatile Map<Class<?>, ServiceFactory> factoryMap = new ConcurrentHashMap<Class<?>, ServiceFactory>();
     private volatile boolean initialized = false;
 
     /**
@@ -75,11 +79,11 @@ public enum ServiceLocator {
     /**
      * Register global values
      *
-     * @param name  identifier of the variable
+     * @param key  identifier of the variable
      * @param value the value
      */
-    synchronized public void register(String name, final Object value) {
-        values.put(name, value);
+    synchronized public void register(String key, final Object value) {
+        values.put(key, value);
     }
 
     /**
@@ -88,62 +92,73 @@ public enum ServiceLocator {
      * @param factory
      * @param <T>
      */
-    public <T> void addFactory(Class<?> clsInterface, ServiceFactory<T> factory) {
+    public <T> void addFactory(Class<T> clsInterface, ServiceFactory<T> factory) {
         factoryMap.put(clsInterface, requireNonNull(factory));
     }
 
     /**
-     * Loads an initialized service object
-     *
+     * Create and return a singleton (shared instance) of the service object.
+     * This method will only create an object when first called.
      * @param name the service identifier
      * @param <T>
-     * @return
+     * @return the shared instance of the service after the first call
      */
-    public <T> T load(String name) {
+    public <T> T singleton(String name) {
         synchronized (this) {
             if (!services.containsKey(name) && classMap.containsKey(name)) {
-                Class clazz = classMap.get(name);
-                List<Class<?>> interfaces = getAllInterfaces(clazz);
-                T service = null;
-                try {
-                    boolean loaded = false;
-                    if (!factoryMap.isEmpty()) {
-                        for (Class<?> cls : factoryMap.keySet()) {
-                            if (interfaces.contains(cls)) {
-                                ServiceFactory<T> factory = factoryMap.get(cls);
-                                System.out.println("Initializing " + clazz.getCanonicalName());
-                                service = factory.getInstance(cls);
-                            }
-                        }
-                    }
-                    // now attempt with default constructor
-                    if (!loaded) {
-                        service = (T) clazz.newInstance();
-                        services.put(name, service);
-                    }
-                    services.put(name, requireNonNull(service, "Could not load service " + name));
-                } catch (Exception e) {
-                    e.printStackTrace();
+                T service = create(name);
+                if (service != null) {
+                    services.put(name, service);
                 }
             }
         }
-        return requireNonNull((T) services.get(name), "Could not load service " + name);
+        return (T) services.get(name);
     }
 
     /**
-     * Returns the registered value of the given key
-     *
+     * Create and return a new instance of the service on every invocation
      * @param name
      * @param <T>
      * @return
      */
-    public <T> T value(String name) {
-        return (T) values.get(name);
+    public <T> T create(String name) {
+        Class clazz = classMap.get(name);
+        List<Class<?>> interfaces = getAllInterfaces(clazz);
+        T service = null;
+        try {
+            boolean loaded = false;
+            if (!factoryMap.isEmpty()) {
+                for (Class<?> cls : factoryMap.keySet()) {
+                    if (interfaces.contains(cls)) {
+                        ServiceFactory<T> factory = factoryMap.get(cls);
+                        System.out.println("Initializing " + clazz.getCanonicalName());
+                        service = factory.newInstance();
+                        loaded = true;
+                    }
+                }
+            }
+            // now attempt with default constructor
+            if (!loaded) {
+                service = (T) clazz.newInstance();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return requireNonNull(service, "Could not create service " + name);
+    }
+
+    /**
+     * Returns the registered global value of the given key
+     * @param key
+     * @param <T>
+     * @return
+     */
+    public <T> T value(String key) {
+        return (T) values.get(key);
     }
 
     /**
      * Get all the interfaces implement by the given class
-     *
      * @param clazz
      * @return
      */
@@ -191,4 +206,5 @@ public enum ServiceLocator {
             throw new NullPointerException(message);
         return obj;
     }
+
 }
