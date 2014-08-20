@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * @author: francis
  */
-public interface AmqpMessageListener extends Serializable {
+public interface AmqpMessageListener {
 
     /**
      * Receives a message from the associated queue

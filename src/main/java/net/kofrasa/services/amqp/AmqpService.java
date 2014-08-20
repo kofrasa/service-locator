@@ -7,8 +7,15 @@ package net.kofrasa.services.amqp;
 public interface AmqpService {
 
     /**
-     * Gets a new channel to send a message
+     * Creates a new channel
      * @return
      */
     AmqpChannel createChannel();
+
+    /**
+     * Creates a new channel bound to a queue
+     * @param queue name of queue to bind to
+     * @return
+     */
+    AmqpChannel createChannel(String queue);
 }

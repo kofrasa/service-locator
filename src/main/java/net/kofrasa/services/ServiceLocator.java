@@ -17,21 +17,17 @@ public enum ServiceLocator {
     instance;
 
     private final Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
-    private final Map<String, Object> values = new HashMap<String, Object>();
-    private final Map<String, Object> services = new HashMap<String, Object>();
-    private final Map<Class<?>, ServiceFactory> factoryMap = new HashMap<Class<?>, ServiceFactory>();
-    private boolean initialized = false;
-
-    enum Locks {
-        INSTANCE;
-    }
+    private volatile Map<String, Object> values = new HashMap<String, Object>();
+    private volatile Map<String, Object> services = new HashMap<String, Object>();
+    private volatile Map<Class<?>, ServiceFactory> factoryMap = new HashMap<Class<?>, ServiceFactory>();
+    private volatile boolean initialized = false;
 
     /**
      * Initialize the service locator
      *
      * @param configuration the properties configuration for the services
      */
-    synchronized public void init(final Properties configuration) {
+    public void init(final Properties configuration) {
         init(configuration, "");
     }
 
@@ -58,7 +54,7 @@ public enum ServiceLocator {
                     // ensure class has a default constructor
                     boolean loaded = false;
                     for (Constructor<?> c : clazz.getConstructors()) {
-                        if (c.isAccessible() && c.getParameterCount() == 0) {
+                        if (c.isAccessible() && c.getParameterTypes().length == 0) {
                             classMap.put(name, clazz);
                             loaded = true;
                             break;
@@ -86,19 +82,25 @@ public enum ServiceLocator {
         values.put(name, value);
     }
 
+    /**
+     * Register a {@code ServiceFactory} to handle creating objects of the given interface
+     * @param clsInterface
+     * @param factory
+     * @param <T>
+     */
     public <T> void addFactory(Class<?> clsInterface, ServiceFactory<T> factory) {
-        factoryMap.put(clsInterface, Objects.requireNonNull(factory));
+        factoryMap.put(clsInterface, requireNonNull(factory));
     }
 
     /**
      * Loads an initialized service object
      *
-     * @param name
+     * @param name the service identifier
      * @param <T>
      * @return
      */
     public <T> T load(String name) {
-        synchronized (Locks.INSTANCE) {
+        synchronized (this) {
             if (!services.containsKey(name) && classMap.containsKey(name)) {
                 Class clazz = classMap.get(name);
                 List<Class<?>> interfaces = getAllInterfaces(clazz);
@@ -119,13 +121,13 @@ public enum ServiceLocator {
                         service = (T) clazz.newInstance();
                         services.put(name, service);
                     }
-                    services.put(name, Objects.requireNonNull(service, "Could not load service " + name));
+                    services.put(name, requireNonNull(service, "Could not load service " + name));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
-        return Objects.requireNonNull((T) services.get(name), "Could not load service " + name);
+        return requireNonNull((T) services.get(name), "Could not load service " + name);
     }
 
     /**
@@ -175,5 +177,18 @@ public enum ServiceLocator {
         }
 
         return new ArrayList<Class<?>>(allInterfaces);
+    }
+
+    // Java 8 compatible Objects.requireNonNull
+    private static <T> T requireNonNull(T obj) {
+        if (obj == null)
+            throw new NullPointerException();
+        return obj;
+    }
+
+    private static <T> T requireNonNull(T obj, String message) {
+        if (obj == null)
+            throw new NullPointerException(message);
+        return obj;
     }
 }
