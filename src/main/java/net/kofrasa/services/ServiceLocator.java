@@ -1,8 +1,5 @@
 package net.kofrasa.services;
 
-import com.google.inject.Guice;
-import net.kofrasa.services.amqp.AmqpChannel;
-
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,9 +13,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public enum ServiceLocator {
 
     /**
-     * The singleton instance of the ServiceLocator class
+     * The SINGLETON instance of the ServiceLocator class
      */
     instance;
+
+    enum Locks {
+        SINGLETON,
+        CREATE
+    }
 
     private final Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
     private volatile Map<String, Object> values = new ConcurrentHashMap<String, Object>();
@@ -87,15 +89,15 @@ public enum ServiceLocator {
     }
 
     /**
-     * Create and return a singleton (shared instance) of the service object.
-     * If the registered service class is a {@code ServiceFactory} it will be used to create the instance.
+     * Create and return a SINGLETON (shared instance) of the service object.
+     * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the instance.
      * The object instance is created only on the first call of this method
      * @param name the service identifier
      * @param <T>
      * @return the shared instance of the service after the first call
      */
-    public <T> T singleton(String name) {
-        synchronized (this) {
+     public <T> T singleton(String name) {
+        synchronized (Locks.SINGLETON) {
             if (!services.containsKey(name) && classMap.containsKey(name)) {
                 T service = create(name);
                 if (service != null) {
@@ -108,7 +110,7 @@ public enum ServiceLocator {
 
     /**
      * Create and return a new instance of the service with the given identifier.
-     * If the registered service class is a {@code ServiceFactory} it will be used to create the instance.
+     * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the instance.
      * @param name
      * @param <T>
      * @return
@@ -117,8 +119,8 @@ public enum ServiceLocator {
         Class clazz = classMap.get(name);
         T service = null;
         try {
-            // ensure singleton factory instance since we only need one factory
-            synchronized (this) {
+            // ensure SINGLETON factory instance since we only need one factory
+            synchronized (Locks.CREATE) {
                 if (!factoryMap.containsKey(name)) {
                     List<Class<?>> interfaces = getAllInterfaces(clazz);
                     if (interfaces.contains(ServiceFactory.class)) {
@@ -128,7 +130,7 @@ public enum ServiceLocator {
                 }
             }
             if (factoryMap.containsKey(name)) {
-                // create service using a factory
+                // CREATE service using a factory
                 ServiceFactory<T> factory = factoryMap.get(name);
                 service = factory.newInstance();
             } else {
@@ -138,7 +140,7 @@ public enum ServiceLocator {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return requireNonNull(service, "Could not create service " + name);
+        return requireNonNull(service, "Could not CREATE service " + name);
     }
 
     /**
