@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * ServiceLocator class is small registry implementation responsible for the initializing, and managing
+ * {@code ServiceLocator} class is small registry implementation responsible for the initializing, and managing
  * externally developed application dependencies from a configuration.
  *
  * @author: francis
@@ -23,7 +23,7 @@ public enum ServiceLocator {
     private final Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
     private volatile Map<String, Object> values = new ConcurrentHashMap<String, Object>();
     private volatile Map<String, Object> services = new ConcurrentHashMap<String, Object>();
-    private volatile Map<Class<?>, ServiceFactory> factoryMap = new ConcurrentHashMap<Class<?>, ServiceFactory>();
+    private volatile Map<String, ServiceFactory> factoryMap = new ConcurrentHashMap<String, ServiceFactory>();
     private volatile boolean initialized = false;
 
     /**
@@ -79,7 +79,7 @@ public enum ServiceLocator {
     /**
      * Register global values
      *
-     * @param key  identifier of the variable
+     * @param key   identifier of the variable
      * @param value the value
      */
     synchronized public void register(String key, final Object value) {
@@ -87,18 +87,9 @@ public enum ServiceLocator {
     }
 
     /**
-     * Register a {@code ServiceFactory} to handle creating objects of the given interface
-     * @param clsInterface
-     * @param factory
-     * @param <T>
-     */
-    public <T> void addFactory(Class<T> clsInterface, ServiceFactory<T> factory) {
-        factoryMap.put(clsInterface, requireNonNull(factory));
-    }
-
-    /**
      * Create and return a singleton (shared instance) of the service object.
-     * This method will only create an object when first called.
+     * If the registered service class is a {@code ServiceFactory} it will be used to create the instance.
+     * The object instance is created only on the first call of this method
      * @param name the service identifier
      * @param <T>
      * @return the shared instance of the service after the first call
@@ -116,29 +107,32 @@ public enum ServiceLocator {
     }
 
     /**
-     * Create and return a new instance of the service on every invocation
+     * Create and return a new instance of the service with the given identifier.
+     * If the registered service class is a {@code ServiceFactory} it will be used to create the instance.
      * @param name
      * @param <T>
      * @return
      */
     public <T> T create(String name) {
         Class clazz = classMap.get(name);
-        List<Class<?>> interfaces = getAllInterfaces(clazz);
         T service = null;
         try {
-            boolean loaded = false;
-            if (!factoryMap.isEmpty()) {
-                for (Class<?> cls : factoryMap.keySet()) {
-                    if (interfaces.contains(cls)) {
-                        ServiceFactory<T> factory = factoryMap.get(cls);
-                        System.out.println("Initializing " + clazz.getCanonicalName());
-                        service = factory.newInstance();
-                        loaded = true;
+            // ensure singleton factory instance since we only need one factory
+            synchronized (this) {
+                if (!factoryMap.containsKey(name)) {
+                    List<Class<?>> interfaces = getAllInterfaces(clazz);
+                    if (interfaces.contains(ServiceFactory.class)) {
+                        ServiceFactory<T> factory = (ServiceFactory<T>) clazz.newInstance();
+                        factoryMap.put(name, factory);
                     }
                 }
             }
-            // now attempt with default constructor
-            if (!loaded) {
+            if (factoryMap.containsKey(name)) {
+                // create service using a factory
+                ServiceFactory<T> factory = factoryMap.get(name);
+                service = factory.newInstance();
+            } else {
+                // now attempt with default constructor
                 service = (T) clazz.newInstance();
             }
         } catch (Exception e) {
@@ -158,7 +152,7 @@ public enum ServiceLocator {
     }
 
     /**
-     * Get all the interfaces implement by the given class
+     * Get all the interfaces implemented by the given class
      * @param clazz
      * @return
      */
@@ -206,5 +200,4 @@ public enum ServiceLocator {
             throw new NullPointerException(message);
         return obj;
     }
-
 }
