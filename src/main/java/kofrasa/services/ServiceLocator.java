@@ -1,4 +1,4 @@
-package net.kofrasa.services;
+package kofrasa.services;
 
 import java.lang.reflect.Constructor;
 import java.util.*;

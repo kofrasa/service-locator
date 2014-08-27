@@ -1,6 +1,6 @@
-package net.kofrasa.services.test;
+package kofrasa.services.test;
 
-import net.kofrasa.services.ServiceLocator;
+import kofrasa.services.ServiceLocator;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -20,7 +20,7 @@ public class ServiceLocatorTest {
     public void setUp() throws Exception {
         Properties props = new Properties();
         props.setProperty("random", "java.util.Random");
-        props.setProperty("randomFactory", "net.kofrasa.services.test.RandomFactory");
+        props.setProperty("randomFactory", "kofrasa.services.test.RandomFactory");
         ServiceLocator.instance.init(props);
         ServiceLocator.instance.register("date", new Date());
     }

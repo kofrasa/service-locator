@@ -1,4 +1,4 @@
-package net.kofrasa.services;
+package kofrasa.services;
 
 /**
  * @author: francis
