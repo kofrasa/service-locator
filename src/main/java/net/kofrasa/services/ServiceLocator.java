@@ -111,6 +111,7 @@ public enum ServiceLocator {
     /**
      * Create and return a new instance of the service with the given identifier.
      * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the instance.
+     *
      * @param name
      * @param <T>
      * @return
@@ -141,6 +142,23 @@ public enum ServiceLocator {
             e.printStackTrace();
         }
         return requireNonNull(service, "Could not CREATE service " + name);
+    }
+
+    /**
+     * Loads an instance of the service using {@code java.util.ServiceLoader}
+     * The service class must be registered in the {@literal META-INF/services} directory.
+     *
+     * @param clazz
+     * @param <T>
+     * @return
+     */
+    public <T> T load(Class<?> clazz) {
+        ServiceLoader<T> loader = (ServiceLoader<T>) ServiceLoader.load(clazz);
+        Iterator<T> it = loader.iterator();
+        if (it.hasNext()) {
+            return it.next();
+        }
+        throw new NullPointerException("Could not load service " + clazz.getCanonicalName());
     }
 
     /**
