@@ -29,34 +29,34 @@ public class ServiceLocatorTest {
     public void testRegisterValues() {
         Date first = ServiceLocator.instance.value("date");
         Date second = ServiceLocator.instance.value("date");
-        assertEquals(first, second);
+        assertEquals("Retrieve the same registered values", first, second);
     }
 
     @Test
     public void testNewInstances() {
         Random first = ServiceLocator.instance.create("random");
         Random second = ServiceLocator.instance.create("random");
-        assertNotSame(first, second);
+        assertNotSame("Create new instances of objects", first, second);
     }
 
     @Test
     public void testSingletons() {
         Random first = ServiceLocator.instance.singleton("random");
         Random second = ServiceLocator.instance.singleton("random");
-        assertEquals(first, second);
+        assertEquals("Create and retrieve a singleton instance", first, second);
     }
 
     @Test
     public void testServiceFactorySingleton() {
         Random first = ServiceLocator.instance.singleton("randomFactory");
         Random second = ServiceLocator.instance.singleton("randomFactory");
-        assertEquals(first, second);
+        assertEquals("Create and retrieve singleton instances with factory", first, second);
     }
 
     @Test
     public void testServiceFactoryInstances() {
         Random first = ServiceLocator.instance.create("randomFactory");
         Random second = ServiceLocator.instance.create("randomFactory");
-        assertNotSame(first, second);
+        assertNotSame("Create and retrieve new instances with factory", first, second);
     }
 }

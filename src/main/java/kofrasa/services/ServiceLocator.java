@@ -1,6 +1,7 @@
 package kofrasa.services;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,20 +57,22 @@ public enum ServiceLocator {
                 final String className = e.getValue().toString();
                 try {
                     // eagerly ensure that all provided classes can be loaded
-                    Class<?> clazz = Class.forName(className, true, ClassLoader.getSystemClassLoader());
+                    Class<?> clazz = Class.forName(className);
+                    requireNonNull(clazz, "Could not load class " + className);
+
                     // ensure class has a default constructor
                     Constructor<?>[] constructors = clazz.getConstructors();
                     boolean found = false;
                     for (Constructor<?> c : constructors) {
-                        if (c.getParameterTypes().length == 0 && c.isAccessible()) {
+                        if (c.getParameterTypes().length == 0 && Modifier.isPublic(c.getModifiers())) {
                             classMap.put(name, clazz);
                             found = true;
                             break;
                         }
                     }
 
-                    if (!found) {
-                        throw new NullPointerException("Could not find class " + className);
+                    if (!found && constructors.length > 0) {
+                        throw new NullPointerException("No accessible default constructor found for " + className);
                     }
 
                 } catch (Exception ex) {
@@ -121,6 +124,7 @@ public enum ServiceLocator {
      */
     public <T> T create(String name) {
         Class clazz = classMap.get(name);
+        requireNonNull(clazz, "Could not locate class for '" + name + "'");
         T service = null;
         try {
             // ensure SINGLETON factory instance since we only need one factory
