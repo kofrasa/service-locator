@@ -20,7 +20,7 @@ public class ServiceLocatorTest {
     public void setUp() throws Exception {
         Properties props = new Properties();
         props.setProperty("random", "java.util.Random");
-//        props.setProperty("randomFactory", "kofrasa.services.test.RandomFactory");
+        props.setProperty("randomFactory", "kofrasa.services.test.RandomFactory");
         ServiceLocator.instance.init(props);
         ServiceLocator.instance.register("date", new Date());
     }
@@ -46,17 +46,17 @@ public class ServiceLocatorTest {
         assertEquals(first, second);
     }
 
-//    @Test
-//    public void testServiceFactorySingleton() {
-//        Random first = ServiceLocator.instance.singleton("randomFactory");
-//        Random second = ServiceLocator.instance.singleton("randomFactory");
-//        assertEquals(first, second);
-//    }
+    @Test
+    public void testServiceFactorySingleton() {
+        Random first = ServiceLocator.instance.singleton("randomFactory");
+        Random second = ServiceLocator.instance.singleton("randomFactory");
+        assertEquals(first, second);
+    }
 
-//    @Test
-//    public void testServiceFactoryInstances() {
-//        Random first = ServiceLocator.instance.create("randomFactory");
-//        Random second = ServiceLocator.instance.create("randomFactory");
-//        assertNotSame(first, second);
-//    }
+    @Test
+    public void testServiceFactoryInstances() {
+        Random first = ServiceLocator.instance.create("randomFactory");
+        Random second = ServiceLocator.instance.create("randomFactory");
+        assertNotSame(first, second);
+    }
 }
