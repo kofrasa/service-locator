@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>net.kofrasa</groupId>
+  <groupId>kofrasa.services</groupId>
   <artifactId>service-locator</artifactId>
-  <version>0.0.1</version>
+  <version>0.1</version>
   <packaging>jar</packaging>
 
   <name>A ServiceLocator implementation</name>
@@ -25,7 +25,8 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.4</version>
+      <version>4.8.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

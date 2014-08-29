@@ -1,4 +1,4 @@
-package net.kofrasa.services;
+package kofrasa.services;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -33,7 +33,7 @@ public enum ServiceLocator {
      *
      * @param configuration the properties configuration for the services
      */
-    public void init(final Properties configuration) {
+    public void init(final Properties configuration) throws Exception {
         init(configuration, "");
     }
 
@@ -43,7 +43,7 @@ public enum ServiceLocator {
      * @param configuration the properties configuration for the services
      * @param prefix        a prefix string of properties to load
      */
-    synchronized public void init(final Properties configuration, String prefix) {
+    synchronized public void init(final Properties configuration, String prefix) throws Exception {
         if (initialized) return;
 
         prefix = (prefix == null || "".equals(prefix.trim())) ? "" : prefix.trim() + ".";
@@ -56,22 +56,24 @@ public enum ServiceLocator {
                 final String className = e.getValue().toString();
                 try {
                     // eagerly ensure that all provided classes can be loaded
-                    Class<?> clazz = Class.forName(className);
+                    Class<?> clazz = Class.forName(className, true, ClassLoader.getSystemClassLoader());
                     // ensure class has a default constructor
-                    boolean loaded = false;
-                    for (Constructor<?> c : clazz.getConstructors()) {
-                        if (c.isAccessible() && c.getParameterTypes().length == 0) {
+                    Constructor<?>[] constructors = clazz.getConstructors();
+                    boolean found = false;
+                    for (Constructor<?> c : constructors) {
+                        if (c.getParameterTypes().length == 0 && c.isAccessible()) {
                             classMap.put(name, clazz);
-                            loaded = true;
+                            found = true;
                             break;
                         }
                     }
-                    if (!loaded)
-                        throw new NoSuchMethodException(
-                                "No default constructor for class " + clazz.getCanonicalName() + " found");
+
+                    if (!found) {
+                        throw new NullPointerException("Could not find class " + className);
+                    }
+
                 } catch (Exception ex) {
-                    System.out.printf("[%s] Could not load class %s", ServiceLocator.class.getName(), className);
-                    ex.printStackTrace();
+                    throw new Exception(String.format("[%s] %s", ServiceLocator.class.getName(), ex.getMessage()));
                 }
             }
         }
@@ -92,11 +94,12 @@ public enum ServiceLocator {
      * Create and return a SINGLETON (shared instance) of the service object.
      * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the instance.
      * The object instance is created only on the first call of this method
+     *
      * @param name the service identifier
      * @param <T>
      * @return the shared instance of the service after the first call
      */
-     public <T> T singleton(String name) {
+    public <T> T singleton(String name) {
         synchronized (Locks.SINGLETON) {
             if (!services.containsKey(name) && classMap.containsKey(name)) {
                 T service = create(name);
@@ -141,7 +144,7 @@ public enum ServiceLocator {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return requireNonNull(service, "Could not CREATE service " + name);
+        return requireNonNull(service, "Could not create object '" + name + "'");
     }
 
     /**
@@ -163,6 +166,7 @@ public enum ServiceLocator {
 
     /**
      * Returns the registered global value of the given key
+     *
      * @param key
      * @param <T>
      * @return
@@ -173,6 +177,7 @@ public enum ServiceLocator {
 
     /**
      * Get all the interfaces implemented by the given class
+     *
      * @param clazz
      * @return
      */
