@@ -1,4 +1,4 @@
-package kofrasa.services.amqp;
+package net.kofrasa.services.amqp;
 
 import java.io.Closeable;
 import java.io.Serializable;

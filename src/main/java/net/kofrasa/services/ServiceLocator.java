@@ -1,4 +1,4 @@
-package kofrasa.services;
+package net.kofrasa.services;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -71,7 +71,7 @@ public enum ServiceLocator {
                         }
                     }
 
-                    if (!found && constructors.length > 0) {
+                    if (!found) {
                         throw new NullPointerException("No accessible default constructor found for " + className);
                     }
 

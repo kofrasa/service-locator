@@ -1,4 +1,4 @@
-package kofrasa.services.amqp;
+package net.kofrasa.services.amqp;
 
 /**
  * This {@code AmqpService} class represent an AMQP service used for providing queueing facilities
