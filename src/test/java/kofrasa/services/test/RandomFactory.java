@@ -1,6 +1,6 @@
-package net.kofrasa.services.test;
+package kofrasa.services.test;
 
-import net.kofrasa.services.ServiceFactory;
+import kofrasa.services.ServiceFactory;
 
 import java.util.Random;
 
