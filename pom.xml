@@ -14,7 +14,6 @@
     <url>http://github.com/kofrasa/service-locator</url>
 
     <scm>
-        <connection>scm:git:git@github.com:kofrasa/${project.artifactId}.git</connection>
         <url>scm:git:git@github.com:kofrasa/${project.artifactId}.git</url>
         <developerConnection>scm:git:git@github.com:kofrasa/${project.artifactId}.git</developerConnection>
         <tag>HEAD</tag>
