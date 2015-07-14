@@ -1,4 +1,4 @@
-package kofrasa.services;
+package net.kofrasa.services;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -14,9 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public enum ServiceLocator {
 
     /**
-     * The SINGLETON instance of the ServiceLocator class
+     * The Singleton INSTANCE of the ServiceLocator class
      */
-    instance;
+    INSTANCE;
 
     enum Locks {
         SINGLETON,
@@ -94,13 +94,13 @@ public enum ServiceLocator {
     }
 
     /**
-     * Create and return a SINGLETON (shared instance) of the service object.
-     * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the instance.
-     * The object instance is created only on the first call of this method
+     * Create and return a SINGLETON (shared INSTANCE) of the service object.
+     * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the INSTANCE.
+     * The object INSTANCE is created only on the first call of this method
      *
      * @param name the service identifier
      * @param <T>
-     * @return the shared instance of the service after the first call
+     * @return the shared INSTANCE of the service after the first call
      */
     public <T> T singleton(String name) {
         synchronized (Locks.SINGLETON) {
@@ -115,8 +115,8 @@ public enum ServiceLocator {
     }
 
     /**
-     * Create and return a new instance of the service with the given identifier.
-     * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the instance.
+     * Create and return a new INSTANCE of the service with the given identifier.
+     * If the registered service class is a {@code ServiceFactory} it will be used to CREATE the INSTANCE.
      *
      * @param name
      * @param <T>
@@ -127,7 +127,7 @@ public enum ServiceLocator {
         requireNonNull(clazz, "Could not locate class for '" + name + "'");
         T service = null;
         try {
-            // ensure SINGLETON factory instance since we only need one factory
+            // ensure SINGLETON factory INSTANCE since we only need one factory
             synchronized (Locks.CREATE) {
                 if (!factoryMap.containsKey(name)) {
                     List<Class<?>> interfaces = getAllInterfaces(clazz);
@@ -152,7 +152,7 @@ public enum ServiceLocator {
     }
 
     /**
-     * Loads an instance of the service using {@code java.util.ServiceLoader}
+     * Loads an INSTANCE of the service using {@code java.util.ServiceLoader}
      * The service class must be registered in the {@literal META-INF/services} directory.
      *
      * @param clazz
@@ -217,7 +217,7 @@ public enum ServiceLocator {
         return new ArrayList<Class<?>>(allInterfaces);
     }
 
-    // Java 8 compatible Objects.requireNonNull
+    // Java 7 compatible Objects.requireNonNull
     private static <T> T requireNonNull(T obj) {
         if (obj == null)
             throw new NullPointerException();

@@ -1,4 +1,4 @@
-package kofrasa.services;
+package net.kofrasa.services;
 
 /**
  * This interface must be implemented to generate instances of the specified generic type parameter.

@@ -1,6 +1,6 @@
-package kofrasa.services.test;
+package net.kofrasa.services.test;
 
-import kofrasa.services.ServiceLocator;
+import net.kofrasa.services.ServiceLocator;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -21,42 +21,42 @@ public class ServiceLocatorTest {
         Properties props = new Properties();
         props.setProperty("random", "java.util.Random");
         props.setProperty("randomFactory", "kofrasa.services.test.RandomFactory");
-        ServiceLocator.instance.init(props);
-        ServiceLocator.instance.register("date", new Date());
+        ServiceLocator.INSTANCE.init(props);
+        ServiceLocator.INSTANCE.register("date", new Date());
     }
 
     @Test
     public void testRegisterValues() {
-        Date first = ServiceLocator.instance.value("date");
-        Date second = ServiceLocator.instance.value("date");
+        Date first = ServiceLocator.INSTANCE.value("date");
+        Date second = ServiceLocator.INSTANCE.value("date");
         assertEquals("Retrieve the same registered values", first, second);
     }
 
     @Test
     public void testNewInstances() {
-        Random first = ServiceLocator.instance.create("random");
-        Random second = ServiceLocator.instance.create("random");
+        Random first = ServiceLocator.INSTANCE.create("random");
+        Random second = ServiceLocator.INSTANCE.create("random");
         assertNotSame("Create new instances of objects", first, second);
     }
 
     @Test
     public void testSingletons() {
-        Random first = ServiceLocator.instance.singleton("random");
-        Random second = ServiceLocator.instance.singleton("random");
-        assertEquals("Create and retrieve a singleton instance", first, second);
+        Random first = ServiceLocator.INSTANCE.singleton("random");
+        Random second = ServiceLocator.INSTANCE.singleton("random");
+        assertEquals("Create and retrieve a singleton INSTANCE", first, second);
     }
 
     @Test
     public void testServiceFactorySingleton() {
-        Random first = ServiceLocator.instance.singleton("randomFactory");
-        Random second = ServiceLocator.instance.singleton("randomFactory");
+        Random first = ServiceLocator.INSTANCE.singleton("randomFactory");
+        Random second = ServiceLocator.INSTANCE.singleton("randomFactory");
         assertEquals("Create and retrieve singleton instances with factory", first, second);
     }
 
     @Test
     public void testServiceFactoryInstances() {
-        Random first = ServiceLocator.instance.create("randomFactory");
-        Random second = ServiceLocator.instance.create("randomFactory");
+        Random first = ServiceLocator.INSTANCE.create("randomFactory");
+        Random second = ServiceLocator.INSTANCE.create("randomFactory");
         assertNotSame("Create and retrieve new instances with factory", first, second);
     }
 }

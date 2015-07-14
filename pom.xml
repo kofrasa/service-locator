@@ -6,7 +6,7 @@
 
     <groupId>net.kofrasa</groupId>
     <artifactId>service-locator</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <packaging>jar</packaging>
 
     <name>A ServiceLocator implementation</name>
