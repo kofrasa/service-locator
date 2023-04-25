@@ -5,13 +5,13 @@ A simple lightweight service locator for registering and managing application-wi
 This provides an explicit alternative inversion of control pattern with a dependence on this library
 
 
-##Features
+## Features
 - Provides a factory interface to facilitate creating services dependent on other contexts
 - Support for loading services from META-INF/services as will the system ServiceLoader
 - Simple configuration using java.util.Properties 
 
 
-##Usage
+## Usage
 Download the latest stable build from the ```./build``` directory.
 Alternatively, you may clone the project, build, and install directly to your local maven repo.
 
@@ -22,5 +22,5 @@ mvn install
 ```
 
 
-##License
+## License
 MIT
